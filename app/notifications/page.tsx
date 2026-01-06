@@ -674,6 +674,7 @@ export default function NotificationsPage() {
                         <Button className="mx-1 h-8" variant={"destructive"} size={"icon"}>
                           <Delete className="h-4" />
                         </Button>
+                        {notification.allOtps&& <Badge>{notification.allOtps.length+1}</Badge>}
                       </td>
                     </tr>
                   ))}
